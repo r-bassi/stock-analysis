@@ -13,8 +13,6 @@ set_points(Value) :-
 get_points(Value) :-
     call(points,Value).
 
-
-
 % Make an API request and get stock data
 get_stock_data(Ticker, Data) :-
     api_key(APIKey),
@@ -35,6 +33,7 @@ parse_stock_data(Data, Ticker, Stats) :-
     atom_number(PrevCloseStr, PrevClose),
     sub_atom(ChangePercentStr, 0, _, 1, ChangePercentNoPercent),
     atom_number(ChangePercentNoPercent, ChangePercent),
+    set_points(0),
     Stats = stock_statistics{
         ticker: Ticker,
         price: Price,
@@ -42,21 +41,25 @@ parse_stock_data(Data, Ticker, Stats) :-
         change_percent: ChangePercent
     }.
 
-get_stock_sma(Ticker, Data) :-
+get_stock_sma(Ticker, SmaData) :-
     api_key(APIKey),
     format(atom(StockDataURL), 'https://www.alphavantage.co/query?function=SMA&symbol=~w&interval=weekly&time_period=10&series_type=open&apikey=~w', [Ticker, APIKey]),
     setup_call_cleanup(
         http_open(StockDataURL, In, []),
-        json_read_dict(In, Data),
+        json_read_dict(In, SmaData),
         close(In)
     ).
 
-parse_stock_sma(Data, Ticker, Stats) :- 
-    get_dict('Technical Analysis: SMA', Data, Smas), 
+parse_stock_sma(SmaData, Ticker, GlobalQuoteStats, Stats) :- 
+    get_dict('Technical Analysis: SMA', SmaData, Smas), 
     get_dict('2023-03-31', Smas, SmaDict),
     get_dict('SMA', SmaDict, SmaStr),
     atom_number(SmaStr, Sma),
-    Stats = Sma.
+    get_points(Value),
+    (Sma < GlobalQuoteStats.price -> set_points(Value + 1); set_points(Value - 1)),
+    Stats = stock_statistics{
+        sma: Sma
+    }.
 
 % Analyze the stock to determine if it's a good buy
 analyze_stock(Stats, Result) :-
@@ -69,6 +72,8 @@ analyze_stock(_, 'Not a Good Buy').
 
 
 stock_analysis(Ticker, Statistics, Result) :-
-    get_stock_sma(Ticker, Data),
-    parse_stock_sma(Data, Ticker, Statistics).
+    get_stock_data(Ticker, Data),
+    parse_stock_data(Data, Ticker, GlobalQuoteStats),
+    get_stock_sma(Ticker, SmaData),
+    parse_stock_sma(SmaData, Ticker, GlobalQuoteStats, Statistics).
 %analyze_stock(Statistics, Result).
