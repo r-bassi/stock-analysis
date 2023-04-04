@@ -61,6 +61,25 @@ parse_stock_sma(SmaData, Ticker, GlobalQuoteStats, Stats) :-
         sma: Sma
     }.
 
+get_stock_overview(Ticker, Data) :-
+    format(atom(StockDataURL), 'https://www.alphavantage.co/query?function=OVERVIEW&symbol=~w&apikey=~w', [Ticker, APIKey]),
+    setup_call_cleanup(
+        http_open(StockDataURL, In, []),
+        json_read_dict(In, Data),
+        close(In)
+    ).
+
+% Calculate the PE ratio
+parse_pe_ratio(Ticker, Stats) :-
+    get_stock_overview(Ticker, Data),
+    get_dict('PERatio', Data, PERatioStr),
+    atom_number(PERatioStr, PE),
+    get_points(Value),
+    (PE < 23 -> set_points(Value + 1); set_points(Value - 1)),
+    Stats = stock_statistics{
+        peRatio: PE
+    }.
+
 % Analyze the stock to determine if it's a good buy
 analyze_stock(Stats, Result) :-
     Stats.price > 0,
@@ -75,5 +94,6 @@ stock_analysis(Ticker, Statistics, Result) :-
     get_stock_data(Ticker, Data),
     parse_stock_data(Data, Ticker, GlobalQuoteStats),
     get_stock_sma(Ticker, SmaData),
-    parse_stock_sma(SmaData, Ticker, GlobalQuoteStats, Statistics).
+    parse_stock_sma(SmaData, Ticker, GlobalQuoteStats, SmaStats),
+    parse_pe_ratio(Ticker, Statistics).
 %analyze_stock(Statistics, Result).
