@@ -95,5 +95,6 @@ stock_analysis(Ticker, Statistics, Result) :-
     parse_stock_data(Data, Ticker, GlobalQuoteStats),
     get_stock_sma(Ticker, SmaData),
     parse_stock_sma(SmaData, Ticker, GlobalQuoteStats, SmaStats),
-    parse_pe_ratio(Ticker, Statistics).
+    parse_pe_ratio(Ticker, PERatioStats),
+    Statistics = GlobalQuoteStats.put(SmaStats).put(PERatioStats).
 %analyze_stock(Statistics, Result).
