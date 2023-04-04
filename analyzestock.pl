@@ -80,6 +80,80 @@ parse_pe_ratio(Ticker, Stats) :-
         peRatio: PE
     }.
 
+% Calculate the 52 week change
+parse_week52_data(Ticker, Stats) :-
+    get_stock_overview(Ticker, Data),
+    get_dict('52WeekHigh', Data, Week52High),
+    get_dict('52WeekLow', Data, Week52Low),
+    atom_number(Week52High, Week52HighInt),
+    atom_number(Week52Low, Week52LowInt),
+    get_points(Value),
+    (Week52HighInt - Week52LowInt > 0 -> set_points(Value + 1); set_points(Value - 1)),
+    Stats = stock_statistics{
+        week52High: Week52HighInt,
+        week52Low: Week52LowInt
+    }.
+
+
+% Output the entire stock overview information
+output_overview_information(Data) :-
+    get_dict('Symbol', Data, Symbol),
+    get_dict('AssetType', Data, AssetType),
+    get_dict('Name', Data, Name),
+    get_dict('Description', Data, Description),
+    get_dict('CIK', Data, CIK),
+    get_dict('Exchange', Data, Exchange),
+    get_dict('Currency', Data, Currency),
+    get_dict('Country', Data, Country),
+    get_dict('Sector', Data, Sector),
+    get_dict('Industry', Data, Industry),
+    get_dict('Address', Data, Address),
+    get_dict('FiscalYearEnd', Data, FiscalYearEnd),
+    get_dict('LatestQuarter', Data, LatestQuarter),
+    get_dict('MarketCapitalization', Data, MarketCapitalization),
+    get_dict('EBITDA', Data, EBITDA),
+    get_dict('PERatio', Data, PERatio),
+    get_dict('PEGRatio', Data, PEGRatio),
+    get_dict('BookValue', Data, BookValue),
+    get_dict('DividendPerShare', Data, DividendPerShare),
+    get_dict('DividendYield', Data, DividendYield),
+    get_dict('EPS', Data, EPS),
+    get_dict('RevenuePerShareTTM', Data, RevenuePerShareTTM),
+    get_dict('ProfitMargin', Data, ProfitMargin),
+    get_dict('OperatingMarginTTM', Data, OperatingMarginTTM),
+    get_dict('ReturnOnAssetsTTM', Data, ReturnOnAssetsTTM),
+    get_dict('ReturnOnEquityTTM', Data, ReturnOnEquityTTM),
+    get_dict('RevenueTTM', Data, RevenueTTM),
+    get_dict('GrossProfitTTM', Data, GrossProfitTTM),
+    get_dict('DilutedEPSTTM', Data, DilutedEPSTTM),
+    get_dict('QuarterlyEarningsGrowthYOY', Data, QuarterlyEarningsGrowthYOY),
+    get_dict('QuarterlyRevenueGrowthYOY', Data, QuarterlyRevenueGrowthYOY),
+    get_dict('AnalystTargetPrice', Data, AnalystTargetPrice),
+    get_dict('TrailingPE', Data, TrailingPE),
+    get_dict('ForwardPE', Data, ForwardPE),
+    get_dict('PriceToSalesRatioTTM', Data, PriceToSalesRatioTTM),
+    get_dict('PriceToBookRatio', Data, PriceToBookRatio),
+    get_dict('EVToRevenue', Data, EVToRevenue),
+    get_dict('EVToEBITDA', Data, EVToEBITDA),
+    get_dict('Beta', Data, Beta),
+    get_dict('52WeekHigh', Data, Week52High),
+    get_dict('52WeekLow', Data, Week52Low),
+    get_dict('50DayMovingAverage', Data, Day50MovingAverage),
+    get_dict('200DayMovingAverage', Data, Day200MovingAverage),
+    get_dict('SharesOutstanding', Data, SharesOutstanding),
+    get_dict('DividendDate', Data, DividendDate),
+    get_dict('ExDividendDate', Data, ExDividendDate),
+    format('Currency: ~w~nCountry: ~w~nSector: ~w~nIndustry: ~w~nAddress: ~w~nFiscalYearEnd: ~w~nLatestQuarter: ~w~nMarketCapitalization: ~w~nEBITDA: ~w~nPERatio: ~w~nPEGRatio: ~w~nBookValue: ~w~nDividendPerShare: ~w~nDividendYield: ~w~nEPS: ~w~nRevenuePerShareTTM: ~w~nProfitMargin: ~w~nOperatingMarginTTM: ~w~nReturnOnAssetsTTM: ~w~nReturnOnEquityTTM: ~w~nRevenueTTM: ~w~nGrossProfitTTM: ~w~nDilutedEPSTTM: ~w~nQuarterlyEarningsGrowthYOY: ~w~nQuarterlyRevenueGrowthYOY: ~w~nAnalystTargetPrice: ~w~nTrailingPE: ~w~nForwardPE: ~w~nPriceToSalesRatioTTM: ~w~nPriceToBookRatio: ~w~nEVToRevenue: ~w~nEVToEBITDA: ~w~nBeta: ~w~n52WeekHigh: ~w~n52WeekLow: ~w~n50DayMovingAverage: ~w~n200DayMovingAverage: ~w~nSharesOutstanding: ~w~nDividendDate: ~w~nExDividendDate: ~w~n', 
+    [Currency, Country, Sector, Industry, Address, FiscalYearEnd, LatestQuarter, 
+    MarketCapitalization, EBITDA, PERatio, PEGRatio, BookValue, DividendPerShare, 
+    DividendYield, EPS, RevenuePerShareTTM, ProfitMargin, OperatingMarginTTM, 
+    ReturnOnAssetsTTM, ReturnOnEquityTTM, RevenueTTM, GrossProfitTTM, DilutedEPSTTM, 
+    QuarterlyEarningsGrowthYOY, QuarterlyRevenueGrowthYOY, AnalystTargetPrice, TrailingPE, 
+    ForwardPE, PriceToSalesRatioTTM, PriceToBookRatio, EVToRevenue, EVToEBITDA, Beta, Week52High, 
+    Week52Low, Day50MovingAverage, Day200MovingAverage, SharesOutstanding, DividendDate, 
+    ExDividendDate]).
+
+
 % Analyze the stock to determine if it's a good buy
 analyze_stock(Stats, Result) :-
     Stats.price > 0,
@@ -95,6 +169,9 @@ stock_analysis(Ticker, Statistics, Result) :-
     parse_stock_data(Data, Ticker, GlobalQuoteStats),
     get_stock_sma(Ticker, SmaData),
     parse_stock_sma(SmaData, Ticker, GlobalQuoteStats, SmaStats),
+    get_stock_overview(Ticker, OverviewData),
+    output_overview_information(OverviewData),
     parse_pe_ratio(Ticker, PERatioStats),
-    Statistics = GlobalQuoteStats.put(SmaStats).put(PERatioStats).
+    parse_week52_data(Ticker, Week52Stats),
+    Statistics = GlobalQuoteStats.put(SmaStats).put(PERatioStats).put(Week52Stats).
 %analyze_stock(Statistics, Result).
