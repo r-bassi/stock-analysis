@@ -11,7 +11,8 @@ set_points(Value) :-
 
 % get the value of the global variable
 get_points(Value) :-
-    call(points,Value).
+    points(Exp),
+    Value is Exp.
 
 % Make an API request and get stock data
 get_stock_data(Ticker, Data) :-
