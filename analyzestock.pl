@@ -51,7 +51,7 @@ get_stock_sma(Ticker, SmaData) :-
         close(In)
     ).
 
-parse_stock_sma(SmaData, Ticker, GlobalQuoteStats, Stats) :- 
+parse_stock_sma(SmaData, _Ticker, GlobalQuoteStats, Stats) :- 
     get_dict('Technical Analysis: SMA', SmaData, Smas), 
     get_dict('2023-03-31', Smas, SmaDict),
     get_dict('SMA', SmaDict, SmaStr),
@@ -63,7 +63,7 @@ parse_stock_sma(SmaData, Ticker, GlobalQuoteStats, Stats) :-
     }.
 
 get_stock_overview(Ticker, Data) :-
-    format(atom(StockDataURL), 'https://www.alphavantage.co/query?function=OVERVIEW&symbol=~w&apikey=~w', [Ticker, APIKey]),
+    format(atom(StockDataURL), 'https://www.alphavantage.co/query?function=OVERVIEW&symbol=~w&apikey=~w', [Ticker, _APIKey]),
     setup_call_cleanup(
         http_open(StockDataURL, In, []),
         json_read_dict(In, Data),
@@ -98,12 +98,12 @@ parse_week52_data(Ticker, Stats) :-
 
 % Output the entire stock overview information
 output_overview_information(Data) :-
-    get_dict('Symbol', Data, Symbol),
-    get_dict('AssetType', Data, AssetType),
-    get_dict('Name', Data, Name),
-    get_dict('Description', Data, Description),
-    get_dict('CIK', Data, CIK),
-    get_dict('Exchange', Data, Exchange),
+    get_dict('Symbol', Data, _Symbol),
+    get_dict('AssetType', Data, _AssetType),
+    get_dict('Name', Data, _Name),
+    get_dict('Description', Data, _Description),
+    get_dict('CIK', Data, _CIK),
+    get_dict('Exchange', Data, _Exchange),
     get_dict('Currency', Data, Currency),
     get_dict('Country', Data, Country),
     get_dict('Sector', Data, Sector),
@@ -154,7 +154,7 @@ output_overview_information(Data) :-
     Week52Low, Day50MovingAverage, Day200MovingAverage, SharesOutstanding, DividendDate, 
     ExDividendDate]).
 
-
+:- discontiguous analyze_stock/2.
 % Analyze the stock to determine if it's a good buy
 analyze_stock(Stats, Result) :-
     Stats.price > 0,
@@ -165,7 +165,7 @@ analyze_stock(Stats, Result) :-
 analyze_stock(_, 'Not a Good Buy').
 
 
-stock_analysis(Ticker, Statistics, Result) :-
+stock_analysis(Ticker, Statistics, _Result) :-
     get_stock_data(Ticker, Data),
     parse_stock_data(Data, Ticker, GlobalQuoteStats),
     get_stock_sma(Ticker, SmaData),
@@ -175,4 +175,4 @@ stock_analysis(Ticker, Statistics, Result) :-
     parse_pe_ratio(Ticker, PERatioStats),
     parse_week52_data(Ticker, Week52Stats),
     Statistics = GlobalQuoteStats.put(SmaStats).put(PERatioStats).put(Week52Stats).
-%analyze_stock(Statistics, Result).
+    analyze_stock(_Statistics, _Result).
