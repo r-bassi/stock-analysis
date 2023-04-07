@@ -156,16 +156,18 @@ output_overview_information(Data) :-
 
 :- discontiguous analyze_stock/2.
 % Analyze the stock to determine if it's a good buy
-analyze_stock(Stats, Result) :-
-    Stats.price > 0,
-    Stats.change_percent > 0,
-    !,
+analyze_stock(Result) :-
+    get_points(Value),
+    Value >= 0,
     Result = 'Good Buy'.
 
-analyze_stock(_, 'Not a Good Buy').
+analyze_stock(Result) :- 
+    get_points(Value),
+    Value < 0,
+    Result = 'Bad Buy'.
 
 
-stock_analysis(Ticker, Statistics, _Result) :-
+stock_analysis(Ticker, Statistics, Result) :-
     get_stock_data(Ticker, Data),
     parse_stock_data(Data, Ticker, GlobalQuoteStats),
     get_stock_sma(Ticker, SmaData),
@@ -174,5 +176,5 @@ stock_analysis(Ticker, Statistics, _Result) :-
     output_overview_information(OverviewData),
     parse_pe_ratio(Ticker, PERatioStats),
     parse_week52_data(Ticker, Week52Stats),
-    Statistics = GlobalQuoteStats.put(SmaStats).put(PERatioStats).put(Week52Stats).
-    analyze_stock(_Statistics, _Result).
+    Statistics = GlobalQuoteStats.put(SmaStats).put(PERatioStats).put(Week52Stats),
+    analyze_stock(Result).
