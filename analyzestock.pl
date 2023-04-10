@@ -76,20 +76,21 @@ parse_pe_ratio(Ticker, Stats) :-
     get_dict('PERatio', Data, PERatioStr),
     atom_number(PERatioStr, PE),
     get_points(Value),
-    (PE < 23 -> set_points(Value + 1); set_points(Value - 1)),
+    (PE < 28 -> set_points(Value + 1); set_points(Value - 1)),
     Stats = stock_statistics{
         peRatio: PE
     }.
 
 % Calculate the 52 week change
-parse_week52_data(Ticker, Stats) :-
+parse_week52_data(Ticker, GlobalQuoteStats, Stats) :-
     get_stock_overview(Ticker, Data),
     get_dict('52WeekHigh', Data, Week52High),
     get_dict('52WeekLow', Data, Week52Low),
     atom_number(Week52High, Week52HighInt),
     atom_number(Week52Low, Week52LowInt),
     get_points(Value),
-    (Week52HighInt - Week52LowInt > 0 -> set_points(Value + 1); set_points(Value - 1)),
+    Avg is (Week52HighInt - Week52LowInt) / 2,
+    (Avg + Week52LowInt > GlobalQuoteStats.price -> set_points(Value + 1); set_points(Value - 1)),
     Stats = stock_statistics{
         week52High: Week52HighInt,
         week52Low: Week52LowInt
@@ -161,6 +162,6 @@ stock_analysis(Ticker, Statistics, Result) :-
     get_stock_sma(Ticker, SmaData),
     parse_stock_sma(SmaData, Ticker, GlobalQuoteStats, SmaStats),
     parse_pe_ratio(Ticker, PERatioStats),
-    parse_week52_data(Ticker, Week52Stats),
+    parse_week52_data(Ticker, GlobalQuoteStats, Week52Stats),
     Statistics = GlobalQuoteStats.put(SmaStats).put(PERatioStats).put(Week52Stats),
     analyze_stock(Result).
