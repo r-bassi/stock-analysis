@@ -10,17 +10,27 @@ main :-
     send(D, append, button('Quit', message(D, destroy))),
     send(D, open).
 
+% format string for analysis statistics
+statistics_string(Statistics, StatsString) :-
+    format(string(StatsString),
+    'Ticker: ~w\nPrice: ~w\nPrevious Close: ~w\nChange Percent: ~w\nSMA: ~w\nPE Ratio: ~w\n52 Week High: ~w\n52 Week Low: ~w\n',
+    [Statistics.ticker, Statistics.price, Statistics.prev_close, Statistics.change_percent, Statistics.sma, Statistics.peRatio, Statistics.week52High, Statistics.week52Low]).
+
 % analyze the stock with the given TickerText, show analysis result
 analyze(TickerText) :-
     get(TickerText, selection, Ticker),
-    stock_analysis(Ticker, Statistics, _),
-    get_points(Points),
+    stock_analysis(Ticker, Statistics, Result),
     new(ResultDialog, dialog('Analysis Result')),
     format(string(Title), 'Analysis Result for ~w', [Ticker]),
-    format(string(StatsLabel), 'Statistics: ~w', [Statistics]),
+    statistics_string(Statistics, StatsString),
+    split_string(StatsString, "\n", "", StatsList),
     send(ResultDialog, append, label(title, Title)),
-    send(ResultDialog, append, label(stats, StatsLabel)),
-    send(ResultDialog, append, label(points, string('Points: %d', Points))),
+    forall(member(Line, StatsList), (
+        % gensym to generate unique atom for each label
+        gensym(label, LabelName),
+        send(ResultDialog, append, label(LabelName, Line))
+    )),
+    send(ResultDialog, append, label(result, string('Result: %s', Result))),
     send(ResultDialog, append, button('OK', message(ResultDialog, destroy))),
     send(ResultDialog, open).
 
